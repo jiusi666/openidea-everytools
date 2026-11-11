@@ -114,7 +114,8 @@ python scripts/oiplugin.py verify dist/jiusi.everytools-0.1.0.oiplugin
 4. **命令入口**：选中 Java 字段声明 → 命令面板执行 `EveryTools: 生成 Setter / Builder 链` → 面板自动弹出并切到该工具。
 5. **历史**：切到另一个工具、改几个选项、再点历史里那条 → 工具、输入、选项应该一起恢复。
 6. **设置生效**：`Settings › Plugins › EveryTools` 关掉 Lombok → 用 `local_install.py clean --apply` 清掉本地状态（或换个没装过的用户目录）→ 重新打开，JSON→POJO 应展开 getter/setter。**注意**：设置只决定首次默认值，之后以面板里改过的为准。
-7. **不做的事**：面板和命令都不应该在任何时候联网、读写项目里的其它文件、或启动进程。
+7. **输入框高度**：拖输入框底部那条细手柄 → 高度跟着走、内容不再被截断；关掉面板重开应还是拖后的高度；双击手柄回到 180px。
+8. **不做的事**：面板和命令都不应该在任何时候联网、读写项目里的其它文件、或启动进程。
 
 ## 出问题怎么查
 

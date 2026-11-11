@@ -148,9 +148,14 @@ impl Tool for Uuid {
         for _ in 0..count {
             out.push(format(&make(&mut state), format_mode));
         }
-        Ok(ToolResult::new()
+        let mut result = ToolResult::new()
             .section("UUID", "text", out.join("\n"))
-            .note("随机数由当前时间与输入派生，适合测试数据，不要用于安全令牌"))
+            .note("随机数由当前时间与输入派生，适合测试数据，不要用于安全令牌");
+        // 粘一个 UUID 进来多半是想解析，别让它默默生成一堆新的
+        if !input.trim().is_empty() {
+            result = result.note("当前是生成模式，输入只当随机种子用；想解析请把「模式」切到解析");
+        }
+        Ok(result)
     }
 }
 

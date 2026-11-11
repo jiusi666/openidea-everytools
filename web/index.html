@@ -227,10 +227,10 @@
   textarea {
     display: block;
     width: 100%;
-    height: 68px;
-    min-height: 68px;
-    max-height: 42vh;
-    padding: 7px 9px;
+    height: 180px;
+    min-height: 96px;
+    max-height: 72vh;
+    padding: 8px 10px;
     border: 1px solid var(--line-strong);
     border-radius: 7px;
     background: var(--bg-soft);
@@ -244,6 +244,30 @@
   textarea::placeholder { color: var(--muted); font-family: inherit; }
   textarea:hover { border-color: var(--muted); }
   textarea:focus { border-color: var(--accent); outline: none; }
+
+  /* 拖动改高度：一条细手柄贴着输入框底部 */
+  .grip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 12px;
+    margin-top: -1px;
+    cursor: ns-resize;
+    touch-action: none;
+    user-select: none;
+  }
+  .grip::before {
+    content: "";
+    width: 34px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--line-strong);
+    transition: width .12s, background .12s;
+  }
+  .grip:hover::before { width: 46px; background: var(--muted); }
+  body.resizing { cursor: ns-resize; user-select: none; }
+  body.resizing textarea { border-color: var(--accent); }
+  body.resizing .grip::before { width: 46px; background: var(--accent); }
 
   /* 选项折叠条 */
   .fold {
@@ -538,6 +562,7 @@
     </div>
     <div class="input-wrap">
       <textarea id="input" spellcheck="false" placeholder="把内容粘到这里，或在编辑器里选中后执行命令"></textarea>
+      <div class="grip" id="grip" role="separator" aria-orientation="horizontal" aria-label="拖动调整输入框高度，双击恢复默认" title="拖动调整高度，双击恢复默认"></div>
     </div>
   </section>
 
@@ -606,6 +631,7 @@
     paletteSearch: $('paletteSearch'),
     paletteList: $('paletteList'),
     input: $('input'),
+    grip: $('grip'),
     source: $('source'),
     charCount: $('charCount'),
     fromEditor: $('fromEditor'),
@@ -946,13 +972,80 @@
 
   /* ---------- 输入 ---------- */
 
-  // 空的时候矮、有内容时按行数长，上限 42vh，避免把结果区顶出屏幕
+  // 手柄拖动设定的高度 = 下限；内容更长时 autoGrow 还会继续长，到 72vh 收住
+  var DEFAULT_INPUT_H = 180;
+  var INPUT_H_KEY = 'everytools:inputHeight';
+  var inputH = DEFAULT_INPUT_H;
+
+  function maxInputH() {
+    return Math.max(160, Math.round(window.innerHeight * 0.72));
+  }
+
+  function clampInputH(h) {
+    return Math.max(96, Math.min(Math.round(h), maxInputH()));
+  }
+
+  // 面板是沙箱里的，localStorage 偶尔会抛异常；失败就退回默认高度，功能不受影响
+  function loadInputH() {
+    try {
+      var v = parseInt(window.localStorage.getItem(INPUT_H_KEY), 10);
+      if (v > 0) inputH = clampInputH(v);
+    } catch (e) { /* 无存储权限时忽略 */ }
+  }
+
+  function saveInputH() {
+    try {
+      window.localStorage.setItem(INPUT_H_KEY, String(inputH));
+    } catch (e) { /* 同上 */ }
+  }
+
   function autoGrow() {
     var t = el.input;
     t.style.height = 'auto';
-    var max = Math.round(window.innerHeight * 0.42);
-    var h = Math.max(68, Math.min(t.scrollHeight + 2, max));
+    var h = Math.max(inputH, Math.min(t.scrollHeight + 2, maxInputH()));
     t.style.height = h + 'px';
+  }
+
+  function bindGrip() {
+    var dragging = false;
+    var startY = 0;
+    var startH = 0;
+
+    el.grip.addEventListener('pointerdown', function (e) {
+      if (e.button !== 0) return;
+      dragging = true;
+      startY = e.clientY;
+      startH = el.input.getBoundingClientRect().height;
+      document.body.classList.add('resizing');
+      try { el.grip.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
+      e.preventDefault();
+    });
+
+    el.grip.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      inputH = clampInputH(startH + (e.clientY - startY));
+      el.input.style.height = inputH + 'px';
+      e.preventDefault();
+    });
+
+    function stop(e) {
+      if (!dragging) return;
+      dragging = false;
+      document.body.classList.remove('resizing');
+      try { el.grip.releasePointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
+      saveInputH();
+      autoGrow();
+    }
+
+    el.grip.addEventListener('pointerup', stop);
+    el.grip.addEventListener('pointercancel', stop);
+
+    // 双击回到默认高度，省得拖来拖去
+    el.grip.addEventListener('dblclick', function () {
+      inputH = DEFAULT_INPUT_H;
+      saveInputH();
+      autoGrow();
+    });
   }
 
   function updateCharCount() {
@@ -1269,6 +1362,12 @@
   }
 
   /* ---------- 启动 ---------- */
+
+  // 高度偏好早于 init 应用，免得首帧先矮后高跳一下
+  loadInputH();
+  bindGrip();
+  autoGrow();
+  window.addEventListener('resize', autoGrow);
 
   if (hasHost && api.onMessage) {
     api.onMessage(function (text) {
