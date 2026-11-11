@@ -231,3 +231,39 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod samples {
+    use super::*;
+    use serde_json::json;
+
+    /// 示例输入是面板上的占位符，用户点开工具看到的第一眼。
+    /// 它必须是「真的能跑出结果」的，否则等于把坏样例摆在用户面前。
+    #[test]
+    fn every_tool_has_readable_sample_output() {
+        for meta in catalog() {
+            let out = run(&meta.id, &meta.placeholder, &json!({}), 1_704_083_400_000);
+            let first = out.sections.first().map(|s| s.text.trim()).unwrap_or("");
+            assert!(!first.is_empty(), "{} 的示例输入跑不出结果", meta.id);
+            for note in &out.notes {
+                assert!(
+                    !note.contains("未知工具") && !note.contains("先粘贴内容"),
+                    "{} 的示例输入被拒了：{note}",
+                    meta.id
+                );
+            }
+        }
+    }
+
+    /// 乱码工具的示例曾经是「自己都修不回来」的乱码：两行方向不同，
+    /// 整段一起编码时第二行失败，把第一行能还原的结果一起拖死了。
+    #[test]
+    fn mojibake_sample_actually_restores() {
+        let meta = catalog().into_iter().find(|m| m.id == "mojibake").unwrap();
+        let out = run("mojibake", &meta.placeholder, &json!({}), 0);
+        assert_ne!(
+            out.sections[0].text, meta.placeholder,
+            "乱码工具的示例输入自己修不回来，说明示例失真或还原逻辑退化了"
+        );
+    }
+}
