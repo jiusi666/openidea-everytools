@@ -3,4 +3,4 @@ repository = "https://github.com/jiusi666/openidea-everytools"
 [[versions]]
 version = "0.1.0"
 package = "https://github.com/jiusi666/openidea-everytools/releases/download/v0.1.0/jiusi.everytools-0.1.0.oiplugin"
-sha256 = "8045ac6e89c328b750307c9f52195718bb0de4c57fb7366b9fd17032fc41adcc"
+sha256 = "5f34cfcfb83f5feea90a014587831bd363ae46ea397cd06ab59670da2477911e"

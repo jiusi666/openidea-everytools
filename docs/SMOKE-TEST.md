@@ -5,7 +5,7 @@
 ## A. 面板预览（10 秒，不装插件）
 
 直接用浏览器打开 `web/index.html`。没有宿主时会进「预览模式」：内置两条假工具，
-能看工具下拉、选项控件、输入区、结果区、历史、明暗主题的完整排版，但**不会真的计算**。
+能看工具选择浮层、选项折叠条、输入区、结果卡片、历史、明暗主题的完整排版，但**不会真的计算**。
 
 适合改 CSS / 调布局时反复看，不适合验证功能。
 
@@ -67,7 +67,7 @@ python scripts/oiplugin.py verify dist/jiusi.everytools-0.1.0.oiplugin
 
 ## D. 手工验收清单
 
-打开面板，按表点一遍。输入粘进输入框，自动算（关掉自动运行就按 `运行` 或 `Ctrl+Enter`）。
+打开面板，按表点一遍。输入粘进输入框自动算；关掉底部「输入即算」后，点输入区右侧的「运行」或按 `Ctrl+Enter`（此时按钮会变成蓝色，空态也会提示改点运行）。
 
 ### 代码
 
@@ -122,7 +122,7 @@ python scripts/oiplugin.py verify dist/jiusi.everytools-0.1.0.oiplugin
 | --- | --- |
 | 面板一片空白 | 面板必须靠 `init` 拿数据；看 `src/lib.rs` 的 `on_message` 是否被调用（`handle` 里打日志），以及 `plugin.toml` 的 `views[].web` 路径 |
 | 面板打开是旧样子 | 实例被缓存了：关掉视图重开；开发模式下改 `web/index.html` 也必须重开 |
-| 工具下拉是空的 | `catalog` 没发出去；`push_catalog` 只在 `init` 里调用 |
+| 工具列表是空的 | `catalog` 没发出去；`push_catalog` 只在 `init` 里调用 |
 | 改 Rust 没反应 | 忘了重新 build + 复制到 `dist/plugin.wasm` |
 | 报「缺少 xxx 权限」 | `plugin.toml` 的 `[capabilities]` 没写，或用户在设置里关掉了 `optional` |
 | 时间类工具算错 | 面板没带 `now`；用 `snapshot` 里 `last_now` 对一下 |
