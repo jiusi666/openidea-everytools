@@ -1,0 +1,155 @@
+id = "jiusi.everytools"
+name = "EveryTools 中文效率小工具"
+version = "0.1.0"
+description = "中文开发者的效率工具合集：JSON→POJO、POJO→JSON、Setter/Builder 链、DTO/VO 骨架、SQL→Mapper XML、Cron 中文释义、时间戳互转、人民币大写、乱码修复、字数统计、进制/单位换算、雪花 ID 解析、证件号校验脱敏、颜色互转、UUID、拼音首字母。全部在本机做文本级计算，结果可一键复制或写回编辑器；不联网、不执行程序、不读写项目文件，历史与选项只存本机。"
+authors = ["九思"]
+license = "Apache-2.0"
+change-notes = """0.1.0 — 首个版本
+· 16 个工具：代码生成 5 个、中文文本 3 个、时间 2 个、数值与校验 6 个
+· 面板内粘贴或读编辑器选中文本，结果可一键复制（系统剪贴板）或写回编辑器
+· Cron 支持 Spring/Quartz 方言，给出中文释义与未来执行时间
+· 全部本机计算；选项与最近输入存在本机，不联网、不跑程序、不读写项目文件"""
+categories = ["tools"]
+engines.openidea = "^1.4"
+icon = "icons/icon.svg"
+icon-dark = "icons/icon_dark.svg"
+wasm = "dist/plugin.wasm"
+activation = ["on-view:everytools", "on-command:*"]
+
+# 能力即权限：editor.read 读选中文本，editor.write 把结果写回编辑器，
+# clipboard 走系统剪贴板，storage 只在本机存选项与最近输入。
+# 不申请 project.read / net: / process: / fs.*，插件不读项目文件、不联网、不跑程序。
+[capabilities]
+required = ["editor.read", "editor.write", "clipboard", "storage"]
+
+[[contributes.commands]]
+id = "open"
+title = "EveryTools: 打开面板"
+category = "EveryTools"
+
+[[contributes.commands]]
+id = "json-to-pojo"
+title = "EveryTools: JSON → POJO"
+category = "EveryTools › 代码"
+
+[[contributes.commands]]
+id = "pojo-to-json"
+title = "EveryTools: POJO → JSON"
+category = "EveryTools › 代码"
+
+[[contributes.commands]]
+id = "setter-chain"
+title = "EveryTools: 生成 Setter / Builder 链"
+category = "EveryTools › 代码"
+
+[[contributes.commands]]
+id = "dto-vo"
+title = "EveryTools: DTO ↔ VO 骨架"
+category = "EveryTools › 代码"
+
+[[contributes.commands]]
+id = "sql-mapper"
+title = "EveryTools: SQL → Mapper XML"
+category = "EveryTools › 代码"
+
+[[contributes.commands]]
+id = "cron"
+title = "EveryTools: Cron 中文释义"
+category = "EveryTools › 时间"
+
+[[contributes.commands]]
+id = "timestamp"
+title = "EveryTools: 时间戳 ↔ 日期"
+category = "EveryTools › 时间"
+
+[[contributes.commands]]
+id = "rmb"
+title = "EveryTools: 人民币金额大写"
+category = "EveryTools › 数值"
+
+[[contributes.commands]]
+id = "mojibake"
+title = "EveryTools: 中文乱码修复"
+category = "EveryTools › 文本"
+
+[[contributes.commands]]
+id = "text-count"
+title = "EveryTools: 中文字数统计"
+category = "EveryTools › 文本"
+
+[[contributes.commands]]
+id = "unit"
+title = "EveryTools: 进制 / 单位换算"
+category = "EveryTools › 数值"
+
+[[contributes.commands]]
+id = "snowflake"
+title = "EveryTools: 雪花 ID 解析"
+category = "EveryTools › 数值"
+
+[[contributes.commands]]
+id = "id-card"
+title = "EveryTools: 证件号校验 / 脱敏"
+category = "EveryTools › 校验"
+
+[[contributes.commands]]
+id = "color"
+title = "EveryTools: 颜色互转"
+category = "EveryTools › 数值"
+
+[[contributes.commands]]
+id = "uuid"
+title = "EveryTools: UUID / 随机串"
+category = "EveryTools › 数值"
+
+[[contributes.commands]]
+id = "pinyin"
+title = "EveryTools: 汉字转拼音首字母"
+category = "EveryTools › 文本"
+
+[[contributes.commands]]
+id = "copy-result"
+title = "EveryTools: 复制当前结果"
+category = "EveryTools"
+
+[[contributes.commands]]
+id = "apply-result"
+title = "EveryTools: 把结果写回编辑器"
+category = "EveryTools"
+
+[[contributes.commands]]
+id = "clear"
+title = "EveryTools: 清空输入与结果"
+category = "EveryTools"
+
+[[contributes.keymaps]]
+command = "open"
+key = "Alt+Shift+E"
+mac = "Meta+Shift+E"
+
+[[contributes.keymaps]]
+command = "json-to-pojo"
+key = "Alt+Shift+J"
+mac = "Meta+Shift+J"
+
+[[contributes.keymaps]]
+command = "timestamp"
+key = "Alt+Shift+T"
+mac = "Meta+Shift+T"
+
+[[contributes.views]]
+id = "everytools"
+title = "EveryTools"
+icon = "icons/view.svg"
+location = "right"
+web = "web/index.html"
+
+[contributes.settings]
+title = "EveryTools 中文效率小工具"
+schema = "settings.schema.json"
+
+[[contributes.statusBar]]
+id = "jiusi.everytools.status"
+text = "工具"
+tooltip = "点击打开 EveryTools 面板"
+command = "open"

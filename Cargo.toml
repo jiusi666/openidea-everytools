@@ -1,0 +1,28 @@
+[package]
+name = "openidea-plugin-everytools"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# A plugin builds on its own (target wasm32-wasip2), outside any IDE workspace.
+[workspace]
+exclude = ["vendor/openidea-plugin"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# SDK snapshot, copied in by scripts/init_plugin.py so the build works offline
+# and stays reproducible.
+openidea-plugin = { path = "vendor/openidea-plugin" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# 乱码修复与拼音首字母都要在 GBK 与 UTF-8 之间来回转。
+encoding_rs = "0.8"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"

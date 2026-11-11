@@ -1,0 +1,73 @@
+{
+  "properties": {
+    "defaultPackage": {
+      "type": "string",
+      "title": "生成 Java 类时使用的默认包名（留空则不输出 package）",
+      "default": ""
+    },
+    "lombok": {
+      "type": "boolean",
+      "title": "生成的 POJO 用 Lombok @Data，而不是展开 getter / setter",
+      "default": true
+    },
+    "jackson": {
+      "type": "boolean",
+      "title": "JSON 字段名与 Java 字段名不一致时补 @JsonProperty",
+      "default": false
+    },
+    "fieldNaming": {
+      "type": "string",
+      "title": "JSON 键转 Java 字段名的风格",
+      "enum": ["camel", "snake", "keep"],
+      "default": "camel"
+    },
+    "setterStyle": {
+      "type": "string",
+      "title": "生成赋值代码的默认风格",
+      "enum": ["setter", "builder", "copy"],
+      "default": "setter"
+    },
+    "cronDialect": {
+      "type": "string",
+      "title": "Cron 方言",
+      "enum": ["spring", "quartz"],
+      "default": "spring"
+    },
+    "timezone": {
+      "type": "number",
+      "title": "时间戳工具的时区（分钟，东八区为 480）",
+      "default": 480,
+      "minimum": -720,
+      "maximum": 840
+    },
+    "snowflakeEpoch": {
+      "type": "number",
+      "title": "雪花 ID 的起始纪元（毫秒，Twitter 默认 1288834974657）",
+      "default": 1288834974657
+    },
+    "uuidCount": {
+      "type": "number",
+      "title": "UUID 工具一次生成几个（1–100）",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 100
+    },
+    "maxHistory": {
+      "type": "number",
+      "title": "保留最近多少条输入（1–50）",
+      "default": 20,
+      "minimum": 1,
+      "maximum": 50
+    },
+    "autoRun": {
+      "type": "boolean",
+      "title": "输入停止后自动计算",
+      "default": true
+    },
+    "showStatusBar": {
+      "type": "boolean",
+      "title": "在状态栏显示当前工具",
+      "default": true
+    }
+  }
+}

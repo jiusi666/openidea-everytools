@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EveryTools 中文效率小工具</title>
+<style>
+  /* 面板跑在 IDE 的沙箱里，没有自己的网络也没有 storage：
+     工具清单、选项控件、结果全部由插件推过来，这里只负责画。 */
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --solid: #f6f7f9;
+    --code: #f6f7f9;
+    --accent: #2563eb;
+    --accent-fg: #ffffff;
+    --warn: #b45309;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1f1f1f;
+      --fg: #e6e6e6;
+      --muted: #9aa0a6;
+      --line: #3a3a3a;
+      --solid: #2b2b2b;
+      --code: #232323;
+      --accent: #4c8dff;
+      --accent-fg: #0b1220;
+      --warn: #e0a458;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    font: 12px/1.55 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  button, select, input, textarea { font: inherit; color: inherit; }
+  .grow { flex: 1; }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px 6px;
+  }
+  header h1 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .2px; }
+  header .badge {
+    margin-left: auto;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 10px;
+  }
+  header .badge.ok { color: var(--accent); border-color: var(--accent); }
+
+  .bar {
+    display: flex;
+    gap: 6px;
+    padding: 0 10px 4px;
+  }
+  .bar select {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--solid);
+  }
+  .summary {
+    margin: 0;
+    padding: 0 10px 8px;
+    color: var(--muted);
+    font-size: 11px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  main { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px 10px 12px; }
+  .block { margin-bottom: 10px; }
+  .block-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .block-head .src { color: var(--accent); }
+
+  textarea {
+    width: 100%;
+    height: 118px;
+    min-height: 60px;
+    resize: vertical;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--solid);
+    font-family: ui-monospace, "Cascadia Code", Consolas, "Microsoft YaHei", monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+  textarea:focus, select:focus, input:focus { outline: 1px solid var(--accent); outline-offset: -1px; }
+
+  #options { display: flex; flex-direction: column; gap: 6px; }
+  #options:empty::after { content: "这个工具没有可调项"; color: var(--muted); font-size: 11px; }
+  .field { display: flex; align-items: center; gap: 6px; }
+  .field > label { min-width: 62px; color: var(--muted); font-size: 11px; }
+  .field input[type="text"], .field input[type="number"], .field select {
+    flex: 1;
+    min-width: 0;
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--solid);
+  }
+  .check { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  .check input { accent-color: var(--accent); margin: 0; }
+  .check span { font-size: 11.5px; }
+
+  .sec { margin-bottom: 8px; }
+  .sec-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+  .sec-title { font-size: 11px; font-weight: 600; color: var(--muted); }
+  .sec .out {
+    margin: 0;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--code);
+    font-family: ui-monospace, "Cascadia Code", Consolas, "Microsoft YaHei", monospace;
+    font-size: 11.5px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 340px;
+    overflow: auto;
+  }
+  .notes { margin: 4px 0 0; padding-left: 16px; color: var(--warn); font-size: 11px; }
+  .notes:empty { display: none; }
+
+  button {
+    padding: 3px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: transparent;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-fg);
+  }
+  button.primary:hover { color: var(--accent-fg); opacity: .9; }
+  button.mini { padding: 1px 7px; font-size: 11px; }
+  button:disabled { opacity: .45; cursor: default; }
+
+  details.block { border-top: 1px solid var(--line); padding-top: 6px; }
+  details summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 11px;
+    list-style: none;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+  .hist {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .hist:hover { background: var(--solid); }
+  .hist .txt {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11.5px;
+  }
+  .hist .tool { color: var(--muted); font-size: 10.5px; flex: none; }
+  .hist .del { border: none; color: var(--muted); padding: 0 4px; }
+  .hist .del:hover { color: var(--warn); }
+  .empty { color: var(--muted); font-size: 11px; }
+
+  footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 44px;
+    transform: translate(-50%, 6px);
+    max-width: calc(100% - 24px);
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    font-size: 11.5px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .16s, transform .16s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<header>
+  <h1>EveryTools</h1>
+  <span class="badge" id="status">连接中…</span>
+</header>
+
+<div class="bar">
+  <select id="toolSelect" aria-label="选择工具" disabled>
+    <option>载入中…</option>
+  </select>
+  <button class="primary" id="runBtn" title="Ctrl+Enter">运行</button>
+</div>
+<p class="summary" id="summary">正在载入工具列表…</p>
+
+<main id="scroll">
+  <section class="block">
+    <div class="block-head">
+      <span>输入</span>
+      <span class="src" id="source"></span>
+      <span class="grow"></span>
+      <span id="charCount"></span>
+      <button class="mini" id="fromEditor" title="读取编辑器里选中的内容">取选区</button>
+    </div>
+    <textarea id="input" spellcheck="false" placeholder="把内容粘到这里，或在编辑器里选中后执行命令"></textarea>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><span>选项</span></div>
+    <div id="options"></div>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <span>结果</span>
+      <span class="grow"></span>
+      <button class="mini" id="copyAll">复制</button>
+      <button class="mini" id="applyAll">写回</button>
+    </div>
+    <div id="sections"><div class="empty">还没有结果</div></div>
+    <ul class="notes" id="notes"></ul>
+  </section>
+
+  <details class="block" id="historyBlock">
+    <summary>历史记录 <span id="historyCount">0</span></summary>
+    <div id="history"></div>
+  </details>
+</main>
+
+<footer>
+  <label class="check"><input type="checkbox" id="autoRun" checked><span>自动运行</span></label>
+  <span class="grow"></span>
+  <button class="mini" id="clearBtn">清空</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var api = window.openidea;
+  var hasHost = !!(api && api.postMessage);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var el = {
+    status: $('status'),
+    toolSelect: $('toolSelect'),
+    runBtn: $('runBtn'),
+    summary: $('summary'),
+    input: $('input'),
+    source: $('source'),
+    charCount: $('charCount'),
+    fromEditor: $('fromEditor'),
+    options: $('options'),
+    sections: $('sections'),
+    notes: $('notes'),
+    copyAll: $('copyAll'),
+    applyAll: $('applyAll'),
+    history: $('history'),
+    historyCount: $('historyCount'),
+    autoRun: $('autoRun'),
+    clearBtn: $('clearBtn'),
+    toast: $('toast')
+  };
+
+  var state = {
+    tools: [],
+    byId: {},
+    tool: '',
+    input: '',
+    options: {},
+    result: { sections: [], notes: [], primary: '' },
+    history: [],
+    autoRun: true
+  };
+
+  var optionEls = [];   // [{ spec, input }]
+  var rebuiltFor = '';  // 已按哪个工具建过控件
+  var runTimer = 0;
+  var optionTimer = 0;
+  var toastTimer = 0;
+
+  function send(obj) {
+    obj.now = Date.now();  // 时间类工具靠它，WASM 侧拿不到可靠时钟
+    if (hasHost) api.postMessage(JSON.stringify(obj));
+    else localHandle(obj);
+  }
+
+  function toast(text) {
+    el.toast.textContent = text;
+    el.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.toast.classList.remove('show'); }, 1800);
+  }
+
+  /* ---------- 工具清单 ---------- */
+
+  function buildCatalog(tools) {
+    state.tools = tools || [];
+    state.byId = {};
+    el.toolSelect.innerHTML = '';
+    var order = [];
+    var groups = {};
+    state.tools.forEach(function (t) {
+      state.byId[t.id] = t;
+      var label = t.groupLabel || t.group || '其他';
+      if (!groups[label]) { groups[label] = []; order.push(label); }
+      groups[label].push(t);
+    });
+    order.forEach(function (label) {
+      var og = document.createElement('optgroup');
+      og.label = label;
+      groups[label].forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t.id;
+        o.textContent = t.name;
+        if (t.summary) o.title = t.summary;
+        og.appendChild(o);
+      });
+      el.toolSelect.appendChild(og);
+    });
+    if (state.tools.length) {
+      el.toolSelect.disabled = false;
+      if (!state.byId[state.tool]) state.tool = state.tools[0].id;
+    } else {
+      el.toolSelect.innerHTML = '<option>（没有工具）</option>';
+    }
+    renderMeta();
+  }
+
+  function currentMeta() { return state.byId[state.tool] || null; }
+
+  function renderMeta() {
+    var meta = currentMeta();
+    if (!meta) return;
+    el.toolSelect.value = meta.id;
+    el.summary.textContent = meta.summary || '';
+    el.input.placeholder = meta.placeholder || '把内容粘到这里';
+    el.runBtn.disabled = false;
+    if (rebuiltFor !== meta.id) {
+      buildOptions(meta);
+      rebuiltFor = meta.id;
+    }
+    syncOptions();
+    updateCharCount();
+  }
+
+  /* ---------- 选项控件：完全由 OptionSpec 生成 ---------- */
+
+  function buildOptions(meta) {
+    el.options.innerHTML = '';
+    optionEls = [];
+    (meta.options || []).forEach(function (spec) {
+      var kind = spec.kind || { kind: 'text' };
+      var row, input;
+      if (kind.kind === 'bool') {
+        row = document.createElement('label');
+        row.className = 'check';
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        var span = document.createElement('span');
+        span.textContent = spec.label;
+        row.appendChild(input);
+        row.appendChild(span);
+      } else {
+        row = document.createElement('div');
+        row.className = 'field';
+        var lb = document.createElement('label');
+        lb.textContent = spec.label;
+        row.appendChild(lb);
+        if (kind.kind === 'select') {
+          input = document.createElement('select');
+          (kind.choices || []).forEach(function (c) {
+            var o = document.createElement('option');
+            o.value = c.value;
+            o.textContent = c.label;
+            input.appendChild(o);
+          });
+        } else {
+          input = document.createElement('input');
+          input.type = kind.kind === 'number' ? 'number' : 'text';
+          if (kind.kind === 'number') {
+            if (typeof kind.min === 'number') input.min = kind.min;
+            if (typeof kind.max === 'number') input.max = kind.max;
+            if (typeof kind.step === 'number') input.step = kind.step;
+          } else if (kind.placeholder) {
+            input.placeholder = kind.placeholder;
+          }
+        }
+        row.appendChild(input);
+      }
+      if (spec.hint) {
+        row.title = spec.hint;
+      }
+      input.addEventListener('change', function () { onOptionChange(spec, input); });
+      if (kind.kind === 'text') {
+        input.addEventListener('input', function () { onOptionChange(spec, input); });
+      }
+      el.options.appendChild(row);
+      optionEls.push({ spec: spec, input: input });
+    });
+  }
+
+  function readOption(spec, input) {
+    var kind = (spec.kind && spec.kind.kind) || 'text';
+    if (kind === 'bool') return !!input.checked;
+    if (kind === 'number') {
+      var n = parseFloat(input.value);
+      if (isNaN(n)) n = typeof spec.default === 'number' ? spec.default : 0;
+      if (typeof spec.kind.min === 'number' && n < spec.kind.min) n = spec.kind.min;
+      if (typeof spec.kind.max === 'number' && n > spec.kind.max) n = spec.kind.max;
+      return n;
+    }
+    return input.value;
+  }
+
+  function onOptionChange(spec, input) {
+    var value = readOption(spec, input);
+    state.options[spec.key] = value;
+    var kind = (spec.kind && spec.kind.kind) || 'text';
+    if (kind !== 'text') {
+      send({ type: 'setOption', key: spec.key, value: value });
+      return;
+    }
+    // 文本框边打字边算太吵，停一下再发
+    clearTimeout(optionTimer);
+    optionTimer = setTimeout(function () {
+      send({ type: 'setOption', key: spec.key, value: value });
+    }, 220);
+  }
+
+  function syncOptions() {
+    optionEls.forEach(function (pair) {
+      var spec = pair.spec;
+      var v = state.options[spec.key];
+      if (v === undefined || v === null) v = spec.default;
+      var kind = (spec.kind && spec.kind.kind) || 'text';
+      // 正在编辑的控件不覆盖，否则光标会跳、小数点的中间状态会被吃掉
+      if (document.activeElement === pair.input) return;
+      if (kind === 'bool') {
+        pair.input.checked = !!v;
+      } else {
+        var str = v === undefined ? '' : String(v);
+        if (pair.input.value !== str) pair.input.value = str;
+      }
+    });
+  }
+
+  /* ---------- 输入 ---------- */
+
+  function updateCharCount() {
+    var n = el.input.value.length;
+    el.charCount.textContent = n ? n + ' 字符' : '';
+  }
+
+  function scheduleRun() {
+    if (!state.autoRun) return;
+    clearTimeout(runTimer);
+    runTimer = setTimeout(pushInput, 260);
+  }
+
+  function pushInput() {
+    clearTimeout(runTimer);
+    send({ type: 'run', text: el.input.value });
+  }
+
+  /* ---------- 结果 ---------- */
+
+  function renderResult() {
+    var r = state.result || {};
+    var sections = r.sections || [];
+    el.sections.innerHTML = '';
+    if (!sections.length) {
+      var d = document.createElement('div');
+      d.className = 'empty';
+      d.textContent = '还没有结果';
+      el.sections.appendChild(d);
+    }
+    sections.forEach(function (sec) {
+      var wrap = document.createElement('div');
+      wrap.className = 'sec';
+      var head = document.createElement('div');
+      head.className = 'sec-head';
+      var title = document.createElement('span');
+      title.className = 'sec-title';
+      title.textContent = sec.title || '';
+      var grow = document.createElement('span');
+      grow.className = 'grow';
+      var btn = document.createElement('button');
+      btn.className = 'mini';
+      btn.textContent = '复制';
+      var pre = document.createElement('pre');
+      pre.className = 'out';
+      pre.textContent = sec.text || '';
+      btn.addEventListener('click', function () {
+        copy(pre.textContent);
+      });
+      head.appendChild(title);
+      head.appendChild(grow);
+      head.appendChild(btn);
+      wrap.appendChild(head);
+      wrap.appendChild(pre);
+      el.sections.appendChild(wrap);
+    });
+
+    el.notes.innerHTML = '';
+    (r.notes || []).forEach(function (n) {
+      var li = document.createElement('li');
+      li.textContent = n;
+      el.notes.appendChild(li);
+    });
+
+    var empty = !(r.primary || '').trim();
+    el.copyAll.disabled = empty;
+    el.applyAll.disabled = empty;
+  }
+
+  function copy(text) {
+    if (!text) return;
+    if (hasHost) {
+      send({ type: 'copy', text: text });
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('已复制'); }, function () { toast('复制失败'); });
+    } else {
+      toast('预览模式下无法访问剪贴板');
+    }
+  }
+
+  /* ---------- 历史 ---------- */
+
+  function renderHistory() {
+    var items = state.history || [];
+    el.historyCount.textContent = items.length;
+    el.history.innerHTML = '';
+    if (!items.length) {
+      var d = document.createElement('div');
+      d.className = 'empty';
+      d.textContent = '运行一次后自动记录';
+      el.history.appendChild(d);
+      return;
+    }
+    items.forEach(function (item, i) {
+      var row = document.createElement('div');
+      row.className = 'hist';
+      var txt = document.createElement('span');
+      txt.className = 'txt';
+      txt.textContent = item.label || '（空输入）';
+      var tool = document.createElement('span');
+      tool.className = 'tool';
+      var meta = state.byId[item.tool];
+      tool.textContent = meta ? meta.name : item.tool;
+      var del = document.createElement('button');
+      del.className = 'del';
+      del.textContent = '×';
+      del.title = '删除这条记录';
+      del.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        send({ type: 'deleteHistory', index: i });
+      });
+      row.title = '点一下恢复这次输入和选项';
+      row.addEventListener('click', function () {
+        send({ type: 'history', index: i });
+      });
+      row.appendChild(txt);
+      row.appendChild(tool);
+      row.appendChild(del);
+      el.history.appendChild(row);
+    });
+  }
+
+  /* ---------- 快照 ---------- */
+
+  function applySnapshot(msg) {
+    state.tool = msg.tool || state.tool;
+    state.input = msg.input || '';
+    state.options = msg.options || {};
+    state.result = msg.result || { sections: [], notes: [], primary: '' };
+    state.history = msg.history || [];
+    state.autoRun = msg.autoRun !== false;
+
+    if (document.activeElement !== el.input && el.input.value !== state.input) {
+      el.input.value = state.input;
+    }
+    el.source.textContent = msg.source || '';
+    el.autoRun.checked = state.autoRun;
+    renderMeta();
+    renderResult();
+    renderHistory();
+    updateCharCount();
+  }
+
+  /* ---------- 事件 ---------- */
+
+  el.toolSelect.addEventListener('change', function () {
+    state.tool = el.toolSelect.value;
+    rebuiltFor = '';
+    renderMeta();
+    send({ type: 'selectTool', tool: state.tool });
+  });
+
+  el.input.addEventListener('input', function () {
+    updateCharCount();
+    scheduleRun();
+  });
+
+  el.input.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      pushInput();
+    }
+  });
+
+  el.runBtn.addEventListener('click', pushInput);
+  el.fromEditor.addEventListener('click', function () { send({ type: 'readEditor' }); });
+  el.copyAll.addEventListener('click', function () { copy((state.result || {}).primary); });
+  el.applyAll.addEventListener('click', function () { send({ type: 'apply' }); });
+  el.clearBtn.addEventListener('click', function () {
+    el.input.value = '';
+    send({ type: 'clear' });
+  });
+  el.autoRun.addEventListener('change', function () {
+    state.autoRun = el.autoRun.checked;
+    send({ type: 'setAutoRun', value: state.autoRun });
+  });
+
+  /* ---------- 没有宿主时的本地预览 ---------- */
+
+  function localHandle(msg) {
+    if (!state.tools.length) {
+      buildCatalog([
+        {
+          id: 'json-to-pojo', name: 'JSON → POJO', group: 'code', groupLabel: '代码',
+          summary: '浏览器预览模式：界面是真界面，计算在插件里，这里用假数据显示布局',
+          placeholder: '{\n  "id": 1,\n  "user_name": "张三"\n}', needsInput: true, language: 'java',
+          options: [
+            { key: 'className', label: '根类名', kind: { kind: 'text', placeholder: 'Root / Item' }, default: '', hint: '留空时对象用 Root、数组用 Item' },
+            { key: 'lombok', label: '使用 Lombok @Data', kind: { kind: 'bool' }, default: true, hint: '关闭后展开 getter / setter' },
+            { key: 'fieldNaming', label: '字段命名', kind: { kind: 'select', choices: [{ value: 'camel', label: 'camelCase' }, { value: 'snake', label: 'snake_case' }, { value: 'keep', label: '保持原样' }] }, default: 'camel', hint: '' }
+          ]
+        },
+        {
+          id: 'timestamp', name: '时间戳转换', group: 'time', groupLabel: '时间',
+          summary: '时间戳与日期互转（预览模式，示例数据）',
+          placeholder: '1704083400000', needsInput: true, language: 'text',
+          options: [
+            { key: 'timezone', label: '时区', kind: { kind: 'select', choices: [{ value: '480', label: 'UTC+8 北京' }, { value: '0', label: 'UTC' }] }, default: '480', hint: '换算用的偏移分钟数' },
+            { key: 'nextCount', label: '个数', kind: { kind: 'number', min: 1, max: 100, step: 1 }, default: 5, hint: '' }
+          ]
+        }
+      ]);
+      state.tool = state.tools[0].id;
+      renderMeta();
+    }
+    state.tool = msg.tool || state.tool;
+    if (typeof msg.text === 'string') state.input = msg.text;
+    if (msg.type === 'setOption') state.options[msg.key] = msg.value;
+    if (msg.type === 'selectTool') { state.tool = msg.tool; renderMeta(); }
+    if (msg.type === 'setAutoRun') state.autoRun = msg.value;
+    if (msg.type === 'clear') { state.input = ''; el.input.value = ''; }
+    if (msg.type === 'readEditor') toast('预览模式下没有编辑器');
+    if (msg.type === 'copy') toast('预览模式下无法访问剪贴板');
+    if (msg.type === 'apply') toast('预览模式下没有编辑器');
+
+    var meta = currentMeta();
+    var body = state.input.trim();
+    state.result = {
+      sections: body ? [{ title: '预览结果', text: '（示例）工具「' + (meta ? meta.name : '') + '」的输出会出现在这里。\n\n输入：\n' + body, language: 'text' }]
+        : [{ title: '预览结果', text: '（示例）这里显示工具输出。直接打开宿主里的面板即可看到真实结果。', language: 'text' }],
+      notes: ['当前是浏览器本地预览，只用于调样式；真实计算需要 OpenIDEA 宿主。'],
+      primary: body
+    };
+    el.input.value = state.input;
+    el.toolSelect.value = state.tool;
+    renderResult();
+    renderHistory();
+    updateCharCount();
+    el.status.textContent = '预览模式';
+    el.status.classList.remove('ok');
+  }
+
+  /* ---------- 启动 ---------- */
+
+  if (hasHost && api.onMessage) {
+    api.onMessage(function (text) {
+      var msg;
+      try { msg = JSON.parse(text); } catch (e) { return; }
+      if (msg.type === 'catalog') {
+        buildCatalog(msg.tools);
+        el.status.textContent = '已连接';
+        el.status.classList.add('ok');
+      } else if (msg.type === 'snapshot') {
+        applySnapshot(msg);
+      } else if (msg.type === 'toast') {
+        toast(msg.text || '');
+      }
+    });
+    // 必须发 init：插件靠它载入 storage、更新状态栏并回第一帧。
+    send({ type: 'init' });
+  } else {
+    localHandle({ type: 'init' });
+  }
+})();
+</script>
+</body>
+</html>
