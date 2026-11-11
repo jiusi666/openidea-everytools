@@ -12,7 +12,7 @@
 
 - 三个快捷键：`Alt+Shift+E` 面板、`Alt+Shift+J` JSON→POJO、`Alt+Shift+T` 时间戳；每个工具同时是独立命令，执行时读取编辑器选中文本。
 - 写回编辑器整段算一次撤销；复制走系统剪贴板；最近 20 条输入连同工具与选项可一键恢复。
-- 11 项设置：默认包名、Lombok、`@JsonProperty`、字段命名、赋值风格、Cron 方言、时区、雪花纪元、UUID 个数、历史条数、自动计算与状态栏。
+- 12 项设置：默认包名、Lombok、`@JsonProperty`、字段命名、赋值风格、Cron 方言、时区、雪花纪元、UUID 个数、历史条数、自动计算与状态栏。
 - 能力 4 个：`editor.read`、`storage`（Low）、`clipboard`、`editor.write`（Medium）。不联网、不执行程序、不读写项目文件，历史与选项只存本机。
 - 工具由元数据自描述，面板按元数据生成界面；新增工具不需要改前端。
 

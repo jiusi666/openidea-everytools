@@ -119,7 +119,7 @@ run_command("json-to-pojo")
 | type | 内容 |
 | --- | --- |
 | `catalog` | `tools`: `ToolMeta` 数组（面板的全部界面来源） |
-| `snapshot` | `tool` `input` `options` `result` `source` `history` `autoRun` `maxHistory` |
+| `snapshot` | `tool` `input` `options` `result` `source` `history` `autoRun` |
 | `toast` | 一行一次性提示 |
 
 每条消息都带 `now`（毫秒 UTC）。这不是冗余：WASM 侧拿不到可靠时钟，时间类工具需要一个可信的「现在」。
@@ -138,7 +138,7 @@ fn ensure_loaded(&mut self) { if !self.loaded { self.load(); } }
 真值只在本机 storage 的 `jiusi.everytools:state` 这一个键里，结构见 `state.rs::State`：
 当前工具、输入、选项（扁平的一个 object，键名全局唯一）、历史、显示偏好、上次的 `now`。
 
-- `from_settings()` 只在**没有存档时**跑一次，把设置面板的 11 项铺成初始选项；
+- `from_settings()` 只在**没有存档时**跑一次，把设置面板的 12 项铺成初始选项；
 - `normalize()` 兜住脏数据：工具 id 不存在就回默认、`options` 不是对象就重置、历史按上限截断；
 - 输入在进入状态时截断到 256 KiB，历史单条截断到 32 KiB——不让一份大文件把 storage 撑爆。
 - 历史用前缀合并：同工具下新输入是上一条的前缀延伸（或反过来），就替换那一条。自动模式下边打边记，

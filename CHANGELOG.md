@@ -17,7 +17,7 @@
   每个工具同时是独立命令，执行时自动读取编辑器选中文本。
 - 历史记录：自动模式下输入停手约 1 秒即记一条（点「运行」/`Ctrl+Enter` 立刻记），
   同一段内容的中间态会合并成一条、不会刷屏；最近 20 条输入连同工具与选项一起恢复，可单条删除。
-- 11 项设置：默认包名、Lombok、`@JsonProperty`、字段命名、赋值风格、Cron 方言、时区、雪花纪元、UUID 个数、历史条数、自动计算与状态栏。
+- 12 项设置：默认包名、Lombok、`@JsonProperty`、字段命名、赋值风格、Cron 方言、时区、雪花纪元、UUID 个数、历史条数、自动计算与状态栏。
 - 工具自描述（`Tool::meta()`）+ 注册表：面板按元数据生成工具列表与选项控件，新增工具不改前端。
   `catalog_json_shape_matches_panel_contract` 守住 Rust 序列化与面板之间的字段契约。
 - 能力 4 个：`editor.read`、`storage`（Low）、`clipboard`、`editor.write`（Medium）。

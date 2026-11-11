@@ -50,13 +50,14 @@ Source: https://github.com/jiusi666/openidea-everytools (Apache-2.0).
 
 ### Verification
 
-- `cargo test` — 70 unit tests: all 16 tools' core branches (Java field parsing, JSON→POJO
+- `cargo test` — 81 unit tests: all 16 tools' core branches (Java field parsing, JSON→POJO
   nesting and arrays, three assignment styles, DTO field mapping, SQL placeholder filling
   with quoting/comment awareness, cron field parsing and next-run calculation, mojibake
   candidates and scoring, RMB uppercase round-trip, radix/byte/duration, snowflake bit
   layout, colour parsing, UUID generation and parsing, ID-card checksum / USCC / Luhn / phone
   masking), plus catalog uniqueness, "every tool runs on empty input without panicking",
-  the panel/Rust serialization contract, and the message handlers via `MockHost`.
+  the panel/Rust serialization contract, history recording and de-duplication, and the
+  message handlers via `MockHost`.
 - `cargo clippy --all-targets -- -D warnings` — clean.
 - `python scripts/oiplugin.py verify dist/jiusi.everytools-0.1.0.oiplugin` — recomputes the
   digest and checks the signature.
@@ -73,5 +74,5 @@ Source: https://github.com/jiusi666/openidea-everytools (Apache-2.0).
   escapes, line sorting/dedup, so none of those are duplicated here. My own `jiusi.mybatis-log`
   restores console logs into SQL — this plugin does the opposite direction (SQL → Mapper XML)
   and shares no code.
-- Package: `jiusi.everytools-0.1.0.oiplugin`, sha256 `20d26f76983fc7a174ffadddca9397752863a1854d048c92d5e3ab11f669ffc3`.
+- Package: `jiusi.everytools-0.1.0.oiplugin`, sha256 `aacae9c4fb0b803c51e35dc1fcb2a814837fee9115ea7c7f6258d5b63546432e`.
 ```

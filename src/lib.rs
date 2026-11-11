@@ -60,7 +60,6 @@ impl EveryTools {
             "source": self.source,
             "history": self.state.history,
             "autoRun": self.state.auto_run,
-            "maxHistory": self.state.max_history,
         })
     }
 
