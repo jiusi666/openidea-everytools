@@ -1,5 +1,4 @@
 name = "九思"
 owners = ["jiusi666"]
-# 与 registry 里的 publishers/jiusi.toml 逐字一致，PR 不需要改这个文件。
 keys = ["HpADCl1YhjtlpM3Wz3kjpk0lWpswFqgaMtmkoL4xwEE="]
 revoked-keys = []
