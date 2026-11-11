@@ -1,5 +1,5 @@
 id = "jiusi.everytools"
-name = "EveryTools 中文效率小工具"
+name = "EveryTools"
 version = "0.1.0"
 description = "中文开发者的效率工具合集：JSON→POJO、POJO→JSON、Setter/Builder 链、DTO/VO 骨架、SQL→Mapper XML、Cron 中文释义、时间戳互转、人民币大写、乱码修复、字数统计、进制/单位换算、雪花 ID 解析、证件号校验脱敏、颜色互转、UUID、拼音首字母。全部在本机做文本级计算，结果可一键复制或写回编辑器；不联网、不执行程序、不读写项目文件，历史与选项只存本机。"
 authors = ["九思"]
@@ -145,7 +145,7 @@ location = "right"
 web = "web/index.html"
 
 [contributes.settings]
-title = "EveryTools 中文效率小工具"
+title = "EveryTools"
 schema = "settings.schema.json"
 
 [[contributes.statusBar]]

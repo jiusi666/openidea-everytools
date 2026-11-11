@@ -1,4 +1,4 @@
-//! EveryTools — 中文效率小工具合集。
+//! EveryTools — 中文开发者的效率工具合集。
 //!
 //! 这一层只做插件壳：命令路由、视图消息、状态编排。具体计算在 `tools/`，
 //! 与宿主交互在 `actions.rs`，持久化在 `state.rs`。新增工具不用改这里。
@@ -164,7 +164,20 @@ impl EveryTools {
             return;
         }
         self.state.tool = tool.to_string();
-        self.source = "面板选择".to_string();
+        // 换工具就换一份输入：上一段 SQL 留在 POJO 工具里没有意义，还容易被误算
+        self.state.input.clear();
+        self.source.clear();
+        self.recompute(now);
+        self.save();
+        self.update_status();
+        self.push();
+    }
+
+    /// 重置：输入、结果、选项都回到初始状态（选项取设置里的默认值）。
+    fn reset(&mut self, now: i64) {
+        self.state.input.clear();
+        self.source.clear();
+        self.state.options = State::from_settings().options;
         self.recompute(now);
         self.save();
         self.update_status();
@@ -273,6 +286,7 @@ impl EveryTools {
                 None => self.toast("读取编辑器需要在编辑器里执行"),
             },
             "clear" => self.clear(now),
+            "reset" => self.reset(now),
             "refresh" => {
                 self.recompute(now);
                 self.push();
@@ -478,5 +492,47 @@ mod tests {
         assert!(p.state.input.is_empty());
         p.on_message("not json", None);
         p.on_message(&json!({"type":"unknown"}).to_string(), None);
+    }
+
+    #[test]
+    fn switching_tool_drops_previous_input() {
+        let _host = MockHost::install();
+        let mut p = plugin();
+        p.on_message(
+            &json!({"type":"run","tool":"sql-mapper","text":"select 1","now":1}).to_string(),
+            None,
+        );
+        assert_eq!(p.state.input, "select 1");
+        p.on_message(
+            &json!({"type":"selectTool","tool":"cron","now":1}).to_string(),
+            None,
+        );
+        assert!(p.state.input.is_empty(), "换工具后不该留着上一份输入");
+        assert!(p.source.is_empty());
+        assert_eq!(p.state.tool, "cron");
+        assert!(p.result.sections.is_empty());
+    }
+
+    #[test]
+    fn reset_clears_input_and_restores_option_defaults() {
+        let _host = MockHost::install();
+        let mut p = plugin();
+        p.on_message(
+            &json!({"type":"run","tool":"setter-chain","text":"private Long id;","now":1})
+                .to_string(),
+            None,
+        );
+        p.on_message(
+            &json!({"type":"setOption","key":"style","value":"builder","now":1}).to_string(),
+            None,
+        );
+        assert_eq!(p.state.options["style"], "builder");
+        p.on_message(&json!({"type":"reset","now":1}).to_string(), None);
+        assert!(p.state.input.is_empty());
+        assert!(p.result.sections.is_empty());
+        assert_eq!(
+            p.state.options["style"], "setter",
+            "重置要回到设置里的默认风格，而不是保留面板上改过的值"
+        );
     }
 }

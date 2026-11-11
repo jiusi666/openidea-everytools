@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EveryTools 中文效率小工具</title>
+<title>EveryTools</title>
 <style>
   /* 面板跑在 IDE 的沙箱里：没有自己的网络也没有 storage。
      工具清单、选项控件、结果全部由插件推过来，这里只负责画。
@@ -557,6 +557,12 @@
       <span class="block-hint" id="source"></span>
       <span class="grow"></span>
       <span class="block-hint" id="charCount"></span>
+      <button class="btn ghost" id="reset" title="重置：清空输入与结果，选项恢复默认">
+        <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M2.7 4.6a4 4 0 1 1-.4 2.1" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M2.1 1.8v2.9h2.9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>重置
+      </button>
       <button class="btn ghost" id="fromEditor" title="读取编辑器里选中的内容">取选区</button>
       <button class="btn" id="runBtn" title="立即运行（Ctrl+Enter）">运行</button>
     </div>
@@ -610,8 +616,6 @@
 <footer>
  <div class="wrap">
   <label class="check"><input type="checkbox" id="autoRun" checked><span>自动计算</span></label>
-  <span class="grow"></span>
-  <button class="btn ghost" id="clearBtn">清空</button>
  </div>
 </footer>
 
@@ -647,7 +651,7 @@
     history: $('history'),
     historyCount: $('historyCount'),
     autoRun: $('autoRun'),
-    clearBtn: $('clearBtn'),
+    reset: $('reset'),
     toast: $('toast')
   };
 
@@ -821,6 +825,9 @@
   function setTool(id) {
     state.tool = id;
     rebuiltFor = '';
+    // 换工具就换一份输入；插件侧也会清，这里先清是为了消息往返期间不显示上一份内容
+    state.input = '';
+    el.input.value = '';
     renderMeta();
     send({ type: 'selectTool', tool: id });
   }
@@ -1293,11 +1300,16 @@
     flashLabel(el.applyAll, '已写回');
   });
 
-  el.clearBtn.addEventListener('click', function () {
+  // 重置：输入与结果清掉，选项回设置里的默认值（由插件侧统一改，面板跟着快照走）
+  function doReset() {
     el.input.value = '';
+    state.input = '';
     autoGrow();
-    send({ type: 'clear' });
-  });
+    updateCharCount();
+    send({ type: 'reset' });
+  }
+
+  el.reset.addEventListener('click', doReset);
 
   el.autoRun.addEventListener('change', function () {
     state.autoRun = el.autoRun.checked;

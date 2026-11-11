@@ -99,13 +99,14 @@ run_command("json-to-pojo")
 | type | 字段 | 作用 |
 | --- | --- | --- |
 | `init` | `now` | 面板加载完成：载入 storage、回 catalog + 第一帧 |
-| `selectTool` | `tool` | 换工具，保留输入与选项 |
+| `selectTool` | `tool` | 换工具，**清空输入**（选项保留，各工具的 key 不重叠） |
 | `run` | `tool?` `text?` `options?` `remember?` `source?` | 跑一次；`text` 缺省表示只重算 |
 | `setOption` | `key` `value` | 改一个选项并重算 |
 | `copy` | `text?` | 复制（缺省复制主结果） |
 | `apply` | — | 写回编辑器 |
 | `readEditor` | — | 读编辑器**选区**当输入 |
-| `clear` | — | 清空输入 |
+| `clear` | — | 只清输入与结果，选项不动 |
+| `reset` | — | 输入、结果、选项全部回初始（选项取设置里的默认值） |
 | `history` / `deleteHistory` | `index` | 恢复 / 删除一条历史 |
 | `setAutoRun` | `value` | 自动计算开关 |
 
