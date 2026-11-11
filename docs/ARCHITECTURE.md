@@ -84,9 +84,12 @@ run_command("json-to-pojo")
 **面板触发**
 
 ```
-面板 input 事件 → {type:"run", text, now}
+面板 input 事件 → {type:"run", text, now}（自动计算，不记历史）
   → on_message
-  → set_input（截断 → 记历史 → recompute → save → 更新状态栏 → push）
+  → set_input（截断 → recompute → save → 更新状态栏 → push）
+  → 停手 800ms 后 {type:"remember"} → 只补一条历史（不重算）
+
+点「运行」/ Ctrl+Enter → {type:"run", remember:true} → 同一条路径顺手记历史
 ```
 
 `recompute()` 是唯一的计算入口，`push()` 是唯一的出站通道；推的永远是**完整快照**而不是增量，
@@ -100,7 +103,8 @@ run_command("json-to-pojo")
 | --- | --- | --- |
 | `init` | `now` | 面板加载完成：载入 storage、回 catalog + 第一帧 |
 | `selectTool` | `tool` | 换工具，**清空输入**（选项保留，各工具的 key 不重叠） |
-| `run` | `tool?` `text?` `options?` `remember?` `source?` | 跑一次；`text` 缺省表示只重算 |
+| `run` | `tool?` `text?` `options?` `remember?` `source?` | 跑一次；`text` 缺省表示只重算；`remember` 为真时顺带记历史 |
+| `remember` | — | 自动模式下输入停稳后补记一条历史，不重算 |
 | `setOption` | `key` `value` | 改一个选项并重算 |
 | `copy` | `text?` | 复制（缺省复制主结果） |
 | `apply` | — | 写回编辑器 |
@@ -137,6 +141,8 @@ fn ensure_loaded(&mut self) { if !self.loaded { self.load(); } }
 - `from_settings()` 只在**没有存档时**跑一次，把设置面板的 11 项铺成初始选项；
 - `normalize()` 兜住脏数据：工具 id 不存在就回默认、`options` 不是对象就重置、历史按上限截断；
 - 输入在进入状态时截断到 256 KiB，历史单条截断到 32 KiB——不让一份大文件把 storage 撑爆。
+- 历史用前缀合并：同工具下新输入是上一条的前缀延伸（或反过来），就替换那一条。自动模式下边打边记，
+  没有这条规则历史会被半截输入刷满；换了内容才新增。
 
 选项是**扁平共享**的：`timezone` 同时被时间戳和雪花 ID 用，`lombok` 同时被 JSON→POJO 和 DTO/VO 用，
 语义一致所以故意共享；不共享的用不同 key（`style` vs `keyStyle`）。加工具时如果语义和已有的不一样，
@@ -166,7 +172,7 @@ fn ensure_loaded(&mut self) { if !self.loaded { self.load(); } }
 
 ## 测试策略
 
-- `tools/` 里的纯函数：直接单测，不需要宿主。目前 70 个用例覆盖 16 个工具的主要分支。
+- `tools/` 里的纯函数：直接单测，不需要宿主。目前 81 个用例覆盖 16 个工具的主要分支。
 - `meta` / `catalog`：唯一性、非空、每个工具都能在空输入下跑完不 panic。
 - 契约：字段名与 `serde` tag 对齐面板假设。
 - `lib.rs`：`MockHost::install()` 之后走真实消息，断言状态变化（init / run / setOption / selectTool / clear / 非法消息）。

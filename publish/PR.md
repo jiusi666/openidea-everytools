@@ -73,5 +73,5 @@ Source: https://github.com/jiusi666/openidea-everytools (Apache-2.0).
   escapes, line sorting/dedup, so none of those are duplicated here. My own `jiusi.mybatis-log`
   restores console logs into SQL — this plugin does the opposite direction (SQL → Mapper XML)
   and shares no code.
-- Package: `jiusi.everytools-0.1.0.oiplugin`, sha256 `461505d42d1aebdcf3f1f24c341c807365d9a4af9a6154af3004e11837b1814e`.
+- Package: `jiusi.everytools-0.1.0.oiplugin`, sha256 `20d26f76983fc7a174ffadddca9397752863a1854d048c92d5e3ab11f669ffc3`.
 ```

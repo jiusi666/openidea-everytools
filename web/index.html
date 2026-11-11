@@ -669,6 +669,7 @@
   var optionEls = [];   // [{ spec, input }]
   var rebuiltFor = '';  // 已按哪个工具建过控件
   var runTimer = 0;
+  var rememberTimer = 0;
   var optionTimer = 0;
   var toastTimer = 0;
 
@@ -828,6 +829,7 @@
     // 换工具就换一份输入；插件侧也会清，这里先清是为了消息往返期间不显示上一份内容
     state.input = '';
     el.input.value = '';
+    clearTimeout(rememberTimer);
     renderMeta();
     send({ type: 'selectTool', tool: id });
   }
@@ -1063,12 +1065,26 @@
   function scheduleRun() {
     if (!state.autoRun) return;
     clearTimeout(runTimer);
-    runTimer = setTimeout(pushInput, 260);
+    runTimer = setTimeout(function () { pushInput(false); }, 260);
   }
 
-  function pushInput() {
+  // 自动模式下没有「运行」这个动作，等输入停稳（且确实算出了东西）再静默记一条历史，
+  // 否则打字过程每一帧都会进历史
+  function scheduleRemember() {
+    clearTimeout(rememberTimer);
+    rememberTimer = setTimeout(function () {
+      if (!el.input.value.trim()) return;
+      if (!((state.result || {}).primary || '').trim()) return;
+      send({ type: 'remember' });
+    }, 800);
+  }
+
+  function pushInput(remember) {
     clearTimeout(runTimer);
-    send({ type: 'run', text: el.input.value });
+    clearTimeout(rememberTimer);
+    send({ type: 'run', text: el.input.value, remember: !!remember });
+    // 手动运行已经记过，只有自动模式的推送要补一条
+    if (!remember) scheduleRemember();
   }
 
   function syncAuto() {
@@ -1283,12 +1299,12 @@
   el.input.addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
-      pushInput();
+      pushInput(true);
     }
   });
 
   el.fromEditor.addEventListener('click', function () { send({ type: 'readEditor' }); });
-  el.runBtn.addEventListener('click', pushInput);
+  el.runBtn.addEventListener('click', function () { pushInput(true); });
 
   el.copyAll.addEventListener('click', function () {
     copy((state.result || {}).primary);
@@ -1304,6 +1320,7 @@
   function doReset() {
     el.input.value = '';
     state.input = '';
+    clearTimeout(rememberTimer);
     autoGrow();
     updateCharCount();
     send({ type: 'reset' });
@@ -1319,6 +1336,26 @@
   });
 
   /* ---------- 没有宿主时的本地预览 ---------- */
+
+  // 预览里也记一条，方便看历史区长什么样（合并规则与插件侧一致）
+  function localRemember() {
+    var text = state.input;
+    if (!text.trim()) return;
+    var top = state.history[0];
+    if (top && top.tool === state.tool) {
+      if (top.input === text) return;
+      if (top.input.indexOf(text) === 0 || text.indexOf(top.input) === 0) state.history.shift();
+    }
+    var line = text.split('\n').filter(function (l) { return l.trim(); })[0] || '（空输入）';
+    line = line.trim();
+    state.history.unshift({
+      tool: state.tool,
+      label: line.length > 56 ? line.slice(0, 56) + '…' : line,
+      input: text,
+      options: state.options || {}
+    });
+    if (state.history.length > 20) state.history.length = 20;
+  }
 
   function localHandle(msg) {
     if (!state.tools.length) {
@@ -1364,6 +1401,7 @@
       notes: ['当前是浏览器本地预览，只用于调样式；真实计算需要 OpenIDEA 宿主。'],
       primary: body
     };
+    if (body && (msg.type === 'remember' || (msg.type === 'run' && msg.remember))) localRemember();
     if (el.input.value !== state.input) el.input.value = state.input;
     renderResult();
     renderHistory();

@@ -103,13 +103,17 @@ impl EveryTools {
         if input.trim().is_empty() {
             return;
         }
-        if self
-            .state
-            .history
-            .first()
-            .is_some_and(|h| h.tool == self.state.tool && h.input == input)
+        if let Some(top) = self.state.history.first()
+            && top.tool == self.state.tool
         {
-            return;
+            if top.input == input {
+                return;
+            }
+            // 同一个工具连着改同一段内容（自动模式下一边打一边记）只留最后一条，
+            // 否则历史会被半截输入刷满
+            if input.starts_with(top.input.as_str()) || top.input.starts_with(input.as_str()) {
+                self.state.history.remove(0);
+            }
         }
         let first = input
             .lines()
@@ -287,6 +291,13 @@ impl EveryTools {
             },
             "clear" => self.clear(now),
             "reset" => self.reset(now),
+            // 自动模式下没有「运行」这个动作，面板等输入停稳后补记一条历史，
+            // 输入和结果都算过了，这里只落历史不再重算
+            "remember" => {
+                self.add_history();
+                self.save();
+                self.push();
+            }
             "refresh" => {
                 self.recompute(now);
                 self.push();
@@ -456,6 +467,47 @@ mod tests {
         assert_eq!(p.state.tool, "pojo-to-json");
         assert!(p.result.sections[0].text.contains("\"id\": 0"));
         assert_eq!(p.state.history.len(), 1);
+    }
+
+    #[test]
+    fn remember_message_records_without_recomputing() {
+        let _host = MockHost::install();
+        let mut p = plugin();
+        // 自动模式：面板只推 run，不带 remember
+        p.on_message(
+            &json!({"type":"run","tool":"pojo-to-json","text":"private Long id;","now":1})
+                .to_string(),
+            None,
+        );
+        assert!(p.state.history.is_empty(), "自动推送不该自己记历史");
+        // 输入停稳后补一条
+        p.on_message(&json!({"type":"remember","now":1}).to_string(), None);
+        assert_eq!(p.state.history.len(), 1);
+        assert_eq!(p.state.history[0].input, "private Long id;");
+        assert_eq!(p.state.history[0].tool, "pojo-to-json");
+    }
+
+    #[test]
+    fn typing_the_same_input_collapses_into_one_entry() {
+        let _host = MockHost::install();
+        let mut p = plugin();
+        for text in ["private", "private Long", "private Long id;"] {
+            p.on_message(
+                &json!({"type":"run","tool":"pojo-to-json","text":text,"now":1,"remember":true})
+                    .to_string(),
+                None,
+            );
+        }
+        assert_eq!(p.state.history.len(), 1, "同一段内容的中间态要合并");
+        assert_eq!(p.state.history[0].input, "private Long id;");
+        // 换成另一段内容才新增一条
+        p.on_message(
+            &json!({"type":"run","tool":"pojo-to-json","text":"private String name;","now":1,"remember":true})
+                .to_string(),
+            None,
+        );
+        assert_eq!(p.state.history.len(), 2);
+        assert_eq!(p.state.history[0].input, "private String name;");
     }
 
     #[test]

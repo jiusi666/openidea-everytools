@@ -55,7 +55,7 @@ cp target/wasm32-wasip2/release/openidea_plugin_everytools.wasm dist/plugin.wasm
 ## C. 自动化
 
 ```sh
-cargo +stable-x86_64-pc-windows-gnu test                    # 77 项
+cargo +stable-x86_64-pc-windows-gnu test                    # 81 项
 cargo +stable-x86_64-pc-windows-gnu clippy --all-targets -- -D warnings
 python scripts/oiplugin.py check                            # 清单 + 能力 + 产物
 python scripts/oiplugin.py verify dist/jiusi.everytools-0.1.0.oiplugin
@@ -112,7 +112,7 @@ python scripts/oiplugin.py verify dist/jiusi.everytools-0.1.0.oiplugin
 2. **取选区**：编辑器里选中一段 → 面板点「取选区」→ 输入框出现那段文字，来源标签显示「编辑器选中」。
 3. **剪贴板**：点结果段右上角的「复制」→ 粘到别处；再点底部「复制」应该复制的是主结果段。
 4. **命令入口**：选中 Java 字段声明 → 命令面板执行 `EveryTools: 生成 Setter / Builder 链` → 面板自动弹出并切到该工具。
-5. **历史**：切到另一个工具、改几个选项、再点历史里那条 → 工具、输入、选项应该一起恢复。
+5. **历史**：粘一段内容 → 停手约 1 秒 → 展开「历史」，应出现 1 条（自动模式下边打边记，中间态会合并成一条，不会刷屏）；切到另一个工具、改几个选项、再点历史里那条 → 工具、输入、选项应该一起恢复。手动点「运行」或 `Ctrl+Enter` 会立刻记一条，不必等。
 6. **设置生效**：`Settings › Plugins › EveryTools` 关掉 Lombok → 用 `local_install.py clean --apply` 清掉本地状态（或换个没装过的用户目录）→ 重新打开，JSON→POJO 应展开 getter/setter。**注意**：设置只决定首次默认值，之后以面板里改过的为准。
 7. **输入框高度**：拖输入框底部那条细手柄 → 高度跟着走、内容不再被截断；关掉面板重开应还是拖后的高度；双击手柄回到 180px。
 8. **换工具清空**：在 SQL 工具里粘一条 SQL → 切到 Cron → 输入框应为空、结果区回到空态，不该留着上一段 SQL。
