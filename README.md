@@ -89,6 +89,23 @@ Windows + Git Bash 下如果报 `link: extra operand`，是 Git 自带的 `link`
 
 安装：`Settings › Plugins › Install from Disk`，选 `jiusi.everytools-<version>.oiplugin`。
 
+## 发布
+
+顺序不能反：registry 条目里的 sha256 必须来自**已经上传的附件**，PR 的自动检查会下载核对。
+
+```sh
+python scripts/check_release.py --local        # 本地包 ↔ publish/plugins 条目对齐
+git tag v0.1.0 && git push origin v0.1.0
+# GitHub 建 Release v0.1.0，正文用 publish/RELEASE-NOTES.md，
+# 附件上传 dist/jiusi.everytools-0.1.0.oiplugin
+python scripts/check_release.py                # 下载远端附件，重算 sha256 + 验签
+python scripts/open_pr.py --dry-run            # 只打印要提交的差异
+python scripts/open_pr.py                     # 向 l0ng-ai/openidea-plugins 提 PR
+```
+
+`publish/` 里的三份东西是发布用的原料：`PR.md`（PR 标题与正文）、`RELEASE-NOTES.md`（Release 正文）、
+`plugins/<id>.toml`（registry 条目：下载地址 + sha256）。换仓库或换版本时这三处都要一起改。
+
 ## 目录
 
 | 路径 | 说明 |
@@ -104,6 +121,9 @@ Windows + Git Bash 下如果报 `link: extra operand`，是 Git 自带的 `link`
 | `docs/ARCHITECTURE.md` | 分层、消息协议、为什么这么分 |
 | `vendor/openidea-plugin` | SDK 源码快照，保证离线可构建 |
 | `scripts/oiplugin.py` | 打包、签名、校验 |
+| `scripts/check_release.py` | 发布自检：远端附件与 registry 条目是否一致 |
+| `scripts/open_pr.py` | 把 registry 条目提成 PR |
+| `publish/` | 发布原料：PR 正文、Release 正文、registry 条目 |
 
 ## 加一个工具
 
