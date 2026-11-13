@@ -1,6 +1,12 @@
 repository = "https://github.com/jiusi666/openidea-everytools"
+suggest = ["pom.xml", "build.gradle", "build.gradle.kts", "package.json"]
 
 [[versions]]
 version = "0.1.0"
 package = "https://github.com/jiusi666/openidea-everytools/releases/download/v0.1.0/jiusi.everytools-0.1.0.oiplugin"
 sha256 = "aacae9c4fb0b803c51e35dc1fcb2a814837fee9115ea7c7f6258d5b63546432e"
+
+[[versions]]
+version = "0.1.1"
+package = "https://github.com/jiusi666/openidea-everytools/releases/download/v0.1.1/jiusi.everytools-0.1.1.oiplugin"
+sha256 = "6242d21615024a9f4d5cc19643e1b57949c8059b3a813996cd89fa91b0ba8529"

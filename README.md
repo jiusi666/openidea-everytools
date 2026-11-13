@@ -3,6 +3,14 @@
 中文开发者的效率工具合集：16 个常用小工具装在一个侧边面板里，粘贴或选中文本即可出结果，
 一键复制到系统剪贴板或直接写回编辑器。全部在本机做文本级计算——不联网、不跑程序、不读写项目文件。
 
+> **状态**：已上架 OpenIDEA 社区插件市场，插件 id `jiusi.everytools`，当前 0.1.1，许可 Apache-2.0，插件 API `^1.4`。
+
+## 安装
+
+- **市场安装**（推荐）：`Settings › Plugins › Available` 搜索「EveryTools」。
+- **从包安装**：`Settings › Plugins › Install from Disk`，选 `jiusi.everytools-0.1.1.oiplugin`。
+- 打开右侧「EveryTools」面板，或按 `Alt+Shift+E`（macOS `Cmd+Shift+E`）。
+
 ## 工具
 
 | 分组 | 工具 | 干什么 |
@@ -80,8 +88,8 @@ mkdir -p dist && cp target/wasm32-wasip2/release/openidea_plugin_everytools.wasm
 cargo +stable-x86_64-pc-windows-gnu test
 python scripts/oiplugin.py check .
 python scripts/oiplugin.py pack . --key .keys/jiusi.key --publisher jiusi \
-  --out dist/jiusi.everytools-0.1.0.oiplugin
-python scripts/oiplugin.py verify dist/jiusi.everytools-0.1.0.oiplugin
+  --out dist/jiusi.everytools-0.1.1.oiplugin
+python scripts/oiplugin.py verify dist/jiusi.everytools-0.1.1.oiplugin
 ```
 
 Windows + Git Bash 下如果报 `link: extra operand`，是 Git 自带的 `link` 抢在 MSVC 链接器前面，
@@ -97,7 +105,7 @@ Windows + Git Bash 下如果报 `link: extra operand`，是 Git 自带的 `link`
 python scripts/check_release.py --local        # 本地包 ↔ publish/plugins 条目对齐
 git tag v0.1.0 && git push origin v0.1.0
 # GitHub 建 Release v0.1.0，正文用 publish/RELEASE-NOTES.md，
-# 附件上传 dist/jiusi.everytools-0.1.0.oiplugin
+# 附件上传 dist/jiusi.everytools-0.1.1.oiplugin
 python scripts/check_release.py                # 下载远端附件，重算 sha256 + 验签
 python scripts/open_pr.py --dry-run            # 只打印要提交的差异
 python scripts/open_pr.py                     # 向 l0ng-ai/openidea-plugins 提 PR
@@ -141,6 +149,16 @@ python scripts/open_pr.py                     # 向 l0ng-ai/openidea-plugins 提
 - 「现在」由面板传入（WASM 侧时钟不可靠）；面板没发过时间时用上次记住的值。
 - 拼音只做首字母（用 GB2312 区段表），不做全拼，为的是不把包撑大。
 - 乱码修复只能救「字节完整、只是被用错编码读过」的文本。字节已经残损的（例如多字节里的 `0xA0` 被换成普通空格）无法逆推，工具会明说而不是瞎猜。
+
+## 路线图
+
+- **0.2.0**：JSONPath 查询 / JSON 树形查看、SQL → MyBatis `<if>`、正则与 JSON 校验、常用 Java 模板片段。继续只做**结构感知**的生成，不做纯文本大小写/排序/编码类命令（官方 `string-tools` 已覆盖，避免重复）。
+- **0.3.0**：工具搜索与快捷键自定义、选项导入导出、结果对比视图。
+**明确不做**：不联网、不跑程序、不读写项目文件、不引入账号与后端。
+
+## 交流
+
+Java 技术交流 Q 群：700072697
 
 ## 许可
 
